@@ -91,33 +91,85 @@
  document.addEventListener('input',e=>{let t=e.target;if(t.dataset.note){ui.notes[recordKey(t.dataset.note)]=t.value;return}if(t.id==='rosterSearch'){const pos=t.selectionStart;ui.rosterSearch=t.value;render();const inp=document.getElementById('rosterSearch');if(inp){inp.focus();try{inp.setSelectionRange(pos,pos)}catch(e){}}}});
 
  const authState={token:null};
- const API_BASE=String(window.SCOUT_API_BASE||'').replace(/\/$/,'');
+ const GAS_URL=String(window.SCOUT_GAS_BRIDGE_URL||'').trim();
+ const BRIDGE_CHANNEL='scout-attendance-gas-bridge-v1';
+ const bridge={frame:null,window:null,origin:null,nonce:null,readyPromise:null,waiters:new Map()};
+ const isGoogleBridgeOrigin=origin=>origin==='https://script.google.com'||
+   /^https:\/\/(?:[a-z0-9-]+\.)*googleusercontent\.com$/.test(origin);
+ function randomHex(n){
+   const b=new Uint8Array(n);window.crypto.getRandomValues(b);
+   return Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');
+ }
  function readCapability(){
    const hash=new URLSearchParams((location.hash||'').replace(/^#/,''));
    const token=hash.get('access');
    if(token){
-     if(!/^[A-Za-z0-9_-]{32,256}$/.test(token))return null;
-     sessionStorage.setItem('scout_capability',token);
      history.replaceState(null,'',location.pathname+location.search);
+     if(!/^[A-Za-z0-9_-]{32,256}$/.test(token))return null;
+     try{sessionStorage.setItem('scout_capability',token)}catch(_){}
      return token;
    }
-   return sessionStorage.getItem('scout_capability');
+   try{return sessionStorage.getItem('scout_capability')}catch(_){return null}
  }
- async function api(action,payload){
-   if(!API_BASE||!authState.token)throw new Error('ต้องเปิดจากลิงก์สำหรับผู้กำกับที่ได้รับอนุญาต');
-   const method=action==='bootstrap'?'GET':'POST';
-   const response=await fetch(API_BASE+'/api/'+action,{
-     method,
-     headers:{Authorization:'Bearer '+authState.token,...(method==='POST'?{'Content-Type':'application/json'}:{})},
-     ...(method==='POST'?{body:JSON.stringify(payload)}:{}),
-     cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer'
+ function startBridge(){
+   if(bridge.readyPromise)return bridge.readyPromise;
+   bridge.readyPromise=new Promise((resolve,reject)=>{
+     let deadline=window.setTimeout(()=>{
+       cleanup();reject(new Error('ไม่สามารถเชื่อม Apps Script ได้ กรุณาตรวจสอบการเผยแพร่ Web App และการอนุญาต iframe'));
+     },30000);
+     function cleanup(){window.clearTimeout(deadline);window.removeEventListener('message',onReady)}
+     function onReady(event){
+       const data=event.data;
+       if(!isGoogleBridgeOrigin(event.origin)||!data||data.channel!==BRIDGE_CHANNEL||
+          data.nonce!==bridge.nonce||data.type!=='ready'||!event.source)return;
+       cleanup();bridge.window=event.source;bridge.origin=event.origin;resolve();
+     }
+     window.addEventListener('message',onReady);
+     try{
+       if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(GAS_URL))
+         throw new Error('ยังไม่ได้ตั้งค่า URL ของ Apps Script Web App');
+       bridge.nonce=randomHex(16);
+       const url=new URL(GAS_URL);url.searchParams.set('bridge','1');url.searchParams.set('nonce',bridge.nonce);
+       const frame=document.createElement('iframe');
+       frame.src=url.href;frame.title='Scout Attendance data connection';
+       frame.setAttribute('aria-hidden','true');
+       frame.style.cssText='position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;border:0';
+       frame.referrerPolicy='no-referrer';
+       bridge.frame=frame;document.body.appendChild(frame);
+     }catch(err){cleanup();reject(err)}
    });
-   let result;try{result=await response.json()}catch(e){throw new Error('API ไม่ได้ส่ง JSON กลับมา')}
-   if(!response.ok)throw new Error(result.error||'API ขัดข้อง ('+response.status+')');
-   return result;
+   return bridge.readyPromise;
+ }
+ window.addEventListener('message',function(event){
+   if(!bridge.window||event.source!==bridge.window||event.origin!==bridge.origin)return;
+   const data=event.data;
+   if(!data||data.channel!==BRIDGE_CHANNEL||data.nonce!==bridge.nonce||
+      data.type!=='response'||typeof data.id!=='string')return;
+   const request=bridge.waiters.get(data.id);if(!request)return;
+   bridge.waiters.delete(data.id);window.clearTimeout(request.timer);
+   data.ok?request.resolve(data.data):request.reject(new Error(data.error||'ไม่สามารถทำรายการได้'));
+ });
+ async function api(action,payload){
+   if(!authState.token)throw new Error('โปรดเปิดจากลิงก์เฉพาะสำหรับผู้กำกับ');
+   await startBridge();
+   return new Promise((resolve,reject)=>{
+     const id=randomHex(12);
+     const timer=window.setTimeout(()=>{
+       bridge.waiters.delete(id);reject(new Error('Apps Script ตอบกลับช้าเกินไป กรุณาลองอีกครั้ง'));
+     },60000);
+     bridge.waiters.set(id,{resolve,reject,timer});
+     bridge.window.postMessage({channel:BRIDGE_CHANNEL,nonce:bridge.nonce,type:'request',
+       id,action,token:authState.token,payload:payload||{}},bridge.origin);
+   });
  }
  function loadState(){
    const loading=document.getElementById('appLoading');
+   if(!authState.token||!GAS_URL){
+     if(loading)loading.textContent=!authState.token
+       ?'STAGING: เว็บไซต์เปิดได้แล้ว แต่ต้องเปิดจากลิงก์เฉพาะสำหรับผู้กำกับจึงจะแสดงทะเบียนหรือเช็กชื่อได้'
+       :'STAGING: ยังไม่ได้กำหนด Apps Script Web App URL';
+     return;
+   }
    if(!API_BASE){
      if(loading)loading.textContent='STAGING: หน้าเว็บไซต์เผยแพร่แล้ว แต่ยังไม่ได้เชื่อมต่อ Backend API จึงยังไม่เปิดดูรายชื่อนักเรียนหรือบันทึกการเข้าเรียน';
      return;
