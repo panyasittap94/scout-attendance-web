@@ -170,10 +170,6 @@
        :'STAGING: ยังไม่ได้กำหนด Apps Script Web App URL';
      return;
    }
-   if(!API_BASE){
-     if(loading)loading.textContent='STAGING: หน้าเว็บไซต์เผยแพร่แล้ว แต่ยังไม่ได้เชื่อมต่อ Backend API จึงยังไม่เปิดดูรายชื่อนักเรียนหรือบันทึกการเข้าเรียน';
-     return;
-   }
    api('bootstrap').then(data=>{
      DB.students=data.students||[];DB.transfers=data.transfers||[];DB.weeks=data.weeks||DB.weeks;
      ui.records=data.records||{};ui.notes=data.notes||{};ui.submitted=data.submitted||{};
