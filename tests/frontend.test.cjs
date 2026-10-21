@@ -24,8 +24,10 @@ test('public static assets include no private scout records or credentials',()=>
   assert.doesNotMatch(html,/google\.script\.run|GAS_BRIDGE_KEY|BRIDGE_SHARED_KEY_SHA256/);
   assert.doesNotMatch(config,/#access=|SCOUT_CAPABILITY_SHA256S|Bearer\s+[a-zA-Z0-9_-]{32}/);
 });
-test('the public frontend calls Apps Script only through message bridge',()=>{
-  assert.match(html,/scout-attendance-gas-bridge-v1/);
+test('the public frontend connects directly using ContentService JSONP',()=>{
+  assert.match(html,/scoutJsonp_/);
+  assert.match(html,/document\.head\.appendChild\(script\)/);
+  assert.doesNotMatch(html,/function startBridge\(\)|postMessage\(/);
   assert.doesNotMatch(html,/readCapability|scout_capability|#access=/);
   assert.match(config,/window\.SCOUT_GAS_BRIDGE_URL\s*=/);
 });
@@ -40,4 +42,13 @@ test('one public URL is copied and no account or token is needed',()=>{
 });
 test('mobile header keeps the share-link button accessible',()=>{
   assert.match(html,/\.topactions \[data-copy-link\]\{white-space:nowrap/);
+});
+
+test('JSONP client sets random callback, no iframe or authentication',()=>{
+ assert.match(html,/url\.searchParams\.set\('api','1'\)/);
+ assert.match(html,/url\.searchParams\.set\('action',action\)/);
+ assert.match(html,/url\.searchParams\.set\('callback',callback\)/);
+ assert.match(html,/script\.onerror=/);
+ assert.match(html,/Google Apps Script ไม่ตอบกลับภายใน 45 วินาที/);
+ assert.doesNotMatch(html,/createElement\('iframe'\)|#access=|scout_capability/);
 });
