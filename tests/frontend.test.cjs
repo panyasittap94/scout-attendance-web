@@ -11,7 +11,7 @@ test('frontend JavaScript parses and no longer uses removed API_BASE',()=>{
   assert.ok(script,'expected inline frontend script');
   assert.doesNotThrow(()=>new vm.Script(script[1]));
   assert.doesNotMatch(html,/\b(?:API_BASE|SCOUT_API_BASE)\b/);
-  assert.match(html,/if\(!authState\.token\|\|!GAS_URL\)/);
+  assert.match(html,/if\(!GAS_URL\)/);
   assert.match(html,/api\('bootstrap'\)/);
 });
 test('public static assets include no private scout records or credentials',()=>{
@@ -26,16 +26,17 @@ test('public static assets include no private scout records or credentials',()=>
 });
 test('the public frontend calls Apps Script only through message bridge',()=>{
   assert.match(html,/scout-attendance-gas-bridge-v1/);
-  assert.match(html,/readCapability\(\)/);
+  assert.doesNotMatch(html,/readCapability|scout_capability|#access=/);
   assert.match(config,/window\.SCOUT_GAS_BRIDGE_URL\s*=/);
 });
 
-test('single full staff URL remains shareable between browsers and phones',()=>{
+test('one public URL is copied and no account or token is needed',()=>{
   assert.match(html,/data-copy-link/);
-  assert.match(html,/function copyStaffLink\(\)/);
-  assert.match(html,/location\.origin\+location\.pathname\+'#access='/);
-  assert.doesNotMatch(html,/history\.replaceState\(null,''/);
-  assert.match(html,/sessionStorage\.getItem\('scout_capability'\)/);
+  assert.match(html,/function copySiteLink\(\)/);
+  assert.match(html,/const link='https:\/\/panyasittap94\.github\.io\/scout-attendance-web\/'/);
+  assert.doesNotMatch(html,/readCapability|authState|scout_capability|#access=/);
+  assert.match(html,/api\('bootstrap'\)/);
+  assert.doesNotMatch(html,/token:authState/);
 });
 test('mobile header keeps the share-link button accessible',()=>{
   assert.match(html,/\.topactions \[data-copy-link\]\{white-space:nowrap/);
