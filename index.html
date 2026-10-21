@@ -99,62 +99,52 @@
  document.addEventListener('input',e=>{let t=e.target;if(t.dataset.note){ui.notes[recordKey(t.dataset.note)]=t.value;return}if(t.id==='rosterSearch'){const pos=t.selectionStart;ui.rosterSearch=t.value;render();const inp=document.getElementById('rosterSearch');if(inp){inp.focus();try{inp.setSelectionRange(pos,pos)}catch(e){}}}});
 
  const GAS_URL=String(window.SCOUT_GAS_BRIDGE_URL||'').trim();
- const BRIDGE_CHANNEL='scout-attendance-gas-bridge-v1';
- const bridge={frame:null,window:null,origin:null,nonce:null,readyPromise:null,waiters:new Map()};
- const isGoogleBridgeOrigin=origin=>origin==='https://script.google.com'||
-   /^https:\/\/(?:[a-z0-9-]+\.)*googleusercontent\.com$/.test(origin);
  function randomHex(n){
    const b=new Uint8Array(n);window.crypto.getRandomValues(b);
    return Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');
  }
- function startBridge(){
-   if(bridge.readyPromise)return bridge.readyPromise;
-   bridge.readyPromise=new Promise((resolve,reject)=>{
-     let deadline=window.setTimeout(()=>{
-       cleanup();reject(new Error('ไม่สามารถเชื่อม Apps Script ได้ กรุณาตรวจสอบการเผยแพร่ Web App และการอนุญาต iframe'));
-     },30000);
-     function cleanup(){window.clearTimeout(deadline);window.removeEventListener('message',onReady)}
-     function onReady(event){
-       const data=event.data;
-       if(!isGoogleBridgeOrigin(event.origin)||!data||data.channel!==BRIDGE_CHANNEL||
-          data.nonce!==bridge.nonce||data.type!=='ready'||!event.source)return;
-       cleanup();bridge.window=event.source;bridge.origin=event.origin;resolve();
-     }
-     window.addEventListener('message',onReady);
-     try{
-       if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(GAS_URL))
-         throw new Error('ยังไม่ได้ตั้งค่า URL ของ Apps Script Web App');
-       bridge.nonce=randomHex(16);
-       const url=new URL(GAS_URL);url.searchParams.set('bridge','1');url.searchParams.set('nonce',bridge.nonce);
-       const frame=document.createElement('iframe');
-       frame.src=url.href;frame.title='Scout Attendance data connection';
-       frame.setAttribute('aria-hidden','true');
-       frame.style.cssText='position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;border:0';
-       frame.referrerPolicy='no-referrer';
-       bridge.frame=frame;document.body.appendChild(frame);
-     }catch(err){cleanup();reject(err)}
-   });
-   return bridge.readyPromise;
- }
- window.addEventListener('message',function(event){
-   if(!bridge.window||event.source!==bridge.window||event.origin!==bridge.origin)return;
-   const data=event.data;
-   if(!data||data.channel!==BRIDGE_CHANNEL||data.nonce!==bridge.nonce||
-      data.type!=='response'||typeof data.id!=='string')return;
-   const request=bridge.waiters.get(data.id);if(!request)return;
-   bridge.waiters.delete(data.id);window.clearTimeout(request.timer);
-   data.ok?request.resolve(data.data):request.reject(new Error(data.error||'ไม่สามารถทำรายการได้'));
- });
- async function api(action,payload){
-   await startBridge();
+ // Apps Script ContentService JSONP avoids CORS preflight and iframe blockers.
+ // This application intentionally exposes read/write actions on public STAGING.
+ function api(action,payload){
    return new Promise((resolve,reject)=>{
-     const id=randomHex(12);
+     if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(GAS_URL)){
+       reject(new Error('URL ของ Google Apps Script ไม่ถูกต้อง'));return;
+     }
+     if(!['bootstrap','save','reopen'].includes(action)){
+       reject(new Error('คำสั่งไม่ถูกต้อง'));return;
+     }
+     const callback='scoutJsonp_'+randomHex(12);
+     let raw='';
+     if(action!=='bootstrap'){
+       try{raw=JSON.stringify(payload||{});}catch(_){reject(new Error('ข้อมูลไม่ถูกต้อง'));return}
+       if(raw.length>12000){reject(new Error('หมายเหตุยาวเกินกว่าจะส่งได้ กรุณาลดความยาว'));return}
+     }
+     const url=new URL(GAS_URL);
+     url.searchParams.set('api','1');
+     url.searchParams.set('action',action);
+     url.searchParams.set('callback',callback);
+     url.searchParams.set('_',Date.now().toString(36));
+     if(action!=='bootstrap')url.searchParams.set('payload',raw);
+     const script=document.createElement('script');
+     script.async=true;script.referrerPolicy='no-referrer';
+     let finished=false;
+     const cleanup=()=>{
+       if(finished)return false;
+       finished=true;window.clearTimeout(timer);delete window[callback];script.remove();
+       return true;
+     };
      const timer=window.setTimeout(()=>{
-       bridge.waiters.delete(id);reject(new Error('Apps Script ตอบกลับช้าเกินไป กรุณาลองอีกครั้ง'));
-     },60000);
-     bridge.waiters.set(id,{resolve,reject,timer});
-     bridge.window.postMessage({channel:BRIDGE_CHANNEL,nonce:bridge.nonce,type:'request',
-       id,action,payload:payload||{}},bridge.origin);
+       if(cleanup())reject(new Error('Google Apps Script ไม่ตอบกลับภายใน 45 วินาที'));
+     },45000);
+     window[callback]=(result)=>{
+       if(!cleanup())return;
+       result&&result.ok?resolve(result.data):reject(new Error(result&&result.error||'Apps Script ส่งข้อมูลไม่สำเร็จ'));
+     };
+     script.onerror=()=>{
+       if(cleanup())reject(new Error('ไม่สามารถโหลดข้อมูลจาก Google Apps Script ได้ กรุณาตรวจสอบ Deployment'));
+     };
+     script.src=url.toString();
+     document.head.appendChild(script);
    });
  }
  function loadState(){
