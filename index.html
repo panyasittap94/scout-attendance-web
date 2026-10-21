@@ -9,7 +9,7 @@
 </style></head>
 <body><div class="shell">
 <aside class="sidebar"><div class="brand"><div class="brand-logo">⚜</div><div><div class="brand-title">SCOUT ATTENDANCE</div><div class="brand-sub">ระบบกิจกรรมลูกเสือ v1.0</div></div></div><div class="navlabel">เมนูหลัก</div><nav id="navDesktop" class="nav"></nav><div class="sidebar-foot"><strong>ภาคเรียนที่ 2/2569</strong><br>ลูกเสือสามัญรุ่นใหญ่ · ชั้น ม.1<br>โรงเรียนทุ่งเสลี่ยมชนูปถัมภ์<hr style="border:0;border-top:1px solid #ffffff22;margin:11px 0">ข้อมูลผ่าน Google Sheets<br><span style="color:#edc779">STAGING — ยังไม่ใช่ Production</span></div></aside>
-<main class="shellmain"><header class="topbar"><div><div class="topname" id="topName">ภาพรวมกิจกรรมลูกเสือ</div><div class="topsub">ภาคเรียนที่ 2 ปีการศึกษา 2569 · อำเภอทุ่งเสลี่ยม จังหวัดสุโขทัย</div></div><div class="topactions"><button type="button" class="btn small" data-copy-link title="คัดลอกลิงก์เดียวสำหรับส่งใน LINE กลุ่มผู้กำกับ">🔗 ส่งลิงก์ LINE</button><span class="chip" id="topWeek">พ. 21 ต.ค. 2569</span><span class="chip demo">● STAGING</span></div></header><nav id="navMobile" class="mobile-nav"></nav><div class="content"><div id="overview" class="view"></div><div id="checkin" class="view"></div><div id="calendar" class="view"></div><div id="report" class="view"></div><div id="roster" class="view"></div><div id="staff" class="view"></div><div id="settings" class="view"></div><footer class="footnote">SCOUT ATTENDANCE v1.0 · Web App · ข้อมูลทะเบียนอ่านจาก Google Sheets โดยไม่ได้ฝังรายชื่อนักเรียนไว้ในซอร์สโค้ด</footer></div></main></div><div class="toast" role="status" aria-live="polite" id="toast"></div><div id="appLoading" style="position:fixed;inset:0;display:grid;place-items:center;background:#f5f7fb;color:#26455d;z-index:500;font:700 18px system-ui;text-align:center;padding:20px">กำลังเตรียมระบบ STAGING...<br>ไม่ต้องเข้าสู่ระบบ Google</div>
+<main class="shellmain"><header class="topbar"><div><div class="topname" id="topName">ภาพรวมกิจกรรมลูกเสือ</div><div class="topsub">ภาคเรียนที่ 2 ปีการศึกษา 2569 · อำเภอทุ่งเสลี่ยม จังหวัดสุโขทัย</div></div><div class="topactions"><button type="button" class="btn small" data-copy-link title="คัดลอก URL เว็บไซต์ปกติสำหรับส่งใน LINE">🔗 คัดลอก URL</button><span class="chip" id="topWeek">พ. 21 ต.ค. 2569</span><span class="chip demo">● STAGING</span></div></header><nav id="navMobile" class="mobile-nav"></nav><div class="content"><div id="overview" class="view"></div><div id="checkin" class="view"></div><div id="calendar" class="view"></div><div id="report" class="view"></div><div id="roster" class="view"></div><div id="staff" class="view"></div><div id="settings" class="view"></div><footer class="footnote">SCOUT ATTENDANCE v1.0 · Web App · ข้อมูลทะเบียนอ่านจาก Google Sheets โดยไม่ได้ฝังรายชื่อนักเรียนไว้ในซอร์สโค้ด</footer></div></main></div><div class="toast" role="status" aria-live="polite" id="toast"></div><div id="appLoading" style="position:fixed;inset:0;display:grid;place-items:center;background:#f5f7fb;color:#26455d;z-index:500;font:700 18px system-ui;text-align:center;padding:20px">กำลังเตรียมระบบ STAGING...<br>ไม่ต้องเข้าสู่ระบบ Google</div>
 <script id="app-data" type="application/json">{"students":[],"transfers":[],"troops":[{"g":1,"lead":"ผู้กำกับกอง 1","deputies":["รองผู้กำกับ"]},{"g":2,"lead":"ผู้กำกับกอง 2","deputies":["รองผู้กำกับ"]},{"g":3,"lead":"ผู้กำกับกอง 3","deputies":["รองผู้กำกับ"]},{"g":4,"lead":"ผู้กำกับกอง 4","deputies":["รองผู้กำกับ"]}],"weeks":["2026-10-21","2026-10-28","2026-11-04","2026-11-11","2026-11-18","2026-11-25","2026-12-02","2026-12-09","2026-12-16","2026-12-23","2026-12-30","2027-01-06","2027-01-13","2027-01-20","2027-01-27","2027-02-03","2027-02-10","2027-02-17","2027-02-24","2027-03-03"],"source":"server-only-private-registry","term":"2/2569"}</script>
 <script src="config.js"></script>
 <script>
@@ -70,16 +70,15 @@
  function openView(view){ui.view=view;render();window.scrollTo({top:0,behavior:'smooth'})}
  function changeWeek(next){if(next<0||next>=20)return;ui.week=next;render()}
  function exportCSV(){let rows=[['สัปดาห์','วันที่','รหัสนักเรียน','ชื่อ','ห้อง','กอง','หมู่','สถานะ','หมายเหตุ']];DB.weeks.forEach((day,w)=>DB.students.filter(s=>ui.reportScope==='all'||Number(ui.reportScope)===s.g).forEach(s=>{let v=value(s.id,w);if(v)rows.push([w+1,day,s.id,s.name,s.room,s.g,s.p,v,ui.notes[recordKey(s.id,w)]||''])}));let csv='\ufeff'+rows.map(row=>row.map(x=>'"'+String(x??'').replaceAll('"','""')+'"').join(',')).join('\r\n');let blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='scout_attendance_demo_2569_2.csv';document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url);toast('ส่งออก CSV จากข้อมูลที่โหลดมาจาก Google Sheets และการแก้ไขบนหน้าจอ (ควรบันทึกก่อนส่งออก)')}
- function copyStaffLink(){
-   if(!authState.token){toast('ยังไม่มีลิงก์ใช้งาน กรุณาเปิดจากลิงก์ที่ผู้ดูแลส่งให้');return}
-   const link=location.origin+location.pathname+'#access='+encodeURIComponent(authState.token);
+ function copySiteLink(){
+   const link='https://panyasittap94.github.io/scout-attendance-web/';
    if(navigator.clipboard&&navigator.clipboard.writeText){
-     navigator.clipboard.writeText(link).then(()=>toast('คัดลอกลิงก์แล้ว วางส่งใน LINE กลุ่มผู้กำกับได้เลย'))
-       .catch(()=>window.prompt('คัดลอกลิงก์สำหรับผู้กำกับ',link));
-   }else{window.prompt('คัดลอกลิงก์สำหรับผู้กำกับ',link)}
+     navigator.clipboard.writeText(link).then(()=>toast('คัดลอก URL เว็บไซต์แล้ว นำไปส่งใน LINE ได้ทันที'))
+       .catch(()=>window.prompt('คัดลอกลิงก์เว็บไซต์',link));
+   }else{window.prompt('คัดลอกลิงก์เว็บไซต์',link)}
  }
  document.addEventListener('click',ev=>{const t=ev.target.closest('button,[data-open-group]');if(!t||ui.busy)return;
- if(t.hasAttribute('data-copy-link')){copyStaffLink();return}
+ if(t.hasAttribute('data-copy-link')){copySiteLink();return}
  if(t.dataset.nav){openView(t.dataset.nav);return}
  if(t.hasAttribute('data-prev')){changeWeek(ui.week-1);return}if(t.hasAttribute('data-next')){changeWeek(ui.week+1);return}
  if(t.dataset.group){ui.group=Number(t.dataset.group);render();return}if(t.dataset.patrol){ui.patrol=Number(t.dataset.patrol);render();return}
@@ -99,7 +98,6 @@
  });
  document.addEventListener('input',e=>{let t=e.target;if(t.dataset.note){ui.notes[recordKey(t.dataset.note)]=t.value;return}if(t.id==='rosterSearch'){const pos=t.selectionStart;ui.rosterSearch=t.value;render();const inp=document.getElementById('rosterSearch');if(inp){inp.focus();try{inp.setSelectionRange(pos,pos)}catch(e){}}}});
 
- const authState={token:null};
  const GAS_URL=String(window.SCOUT_GAS_BRIDGE_URL||'').trim();
  const BRIDGE_CHANNEL='scout-attendance-gas-bridge-v1';
  const bridge={frame:null,window:null,origin:null,nonce:null,readyPromise:null,waiters:new Map()};
@@ -108,16 +106,6 @@
  function randomHex(n){
    const b=new Uint8Array(n);window.crypto.getRandomValues(b);
    return Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');
- }
- function readCapability(){
-   const hash=new URLSearchParams((location.hash||'').replace(/^#/,''));
-   const token=hash.get('access');
-   if(token){
-     if(!/^[A-Za-z0-9_-]{32,256}$/.test(token))return null;
-     try{sessionStorage.setItem('scout_capability',token)}catch(_){}
-     return token;
-   }
-   try{return sessionStorage.getItem('scout_capability')}catch(_){return null}
  }
  function startBridge(){
    if(bridge.readyPromise)return bridge.readyPromise;
@@ -158,7 +146,6 @@
    data.ok?request.resolve(data.data):request.reject(new Error(data.error||'ไม่สามารถทำรายการได้'));
  });
  async function api(action,payload){
-   if(!authState.token)throw new Error('โปรดเปิดจากลิงก์เฉพาะสำหรับผู้กำกับ');
    await startBridge();
    return new Promise((resolve,reject)=>{
      const id=randomHex(12);
@@ -167,15 +154,13 @@
      },60000);
      bridge.waiters.set(id,{resolve,reject,timer});
      bridge.window.postMessage({channel:BRIDGE_CHANNEL,nonce:bridge.nonce,type:'request',
-       id,action,token:authState.token,payload:payload||{}},bridge.origin);
+       id,action,payload:payload||{}},bridge.origin);
    });
  }
  function loadState(){
    const loading=document.getElementById('appLoading');
-   if(!authState.token||!GAS_URL){
-     if(loading)loading.textContent=!authState.token
-       ?'STAGING: กรุณาเปิดลิงก์ฉบับเต็มที่ส่งใน LINE กลุ่มผู้กำกับ'
-       :'STAGING: ยังไม่ได้กำหนด Apps Script Web App URL';
+   if(!GAS_URL){
+     if(loading)loading.textContent='STAGING: ยังไม่ได้กำหนด URL ของ Apps Script Web App';
      return;
    }
    api('bootstrap').then(data=>{
@@ -185,7 +170,7 @@
      if(Array.isArray(data.troops))DB.troops=data.troops;
      render();loading?.remove();toast('เชื่อมต่อฐานข้อมูลเรียบร้อย');
    }).catch(err=>{
-     if(loading)loading.textContent='ไม่สามารถเปิดข้อมูล: '+err.message+' กรุณาเปิดจากลิงก์เฉพาะที่ได้รับจากผู้ดูแล';
+     if(loading)loading.textContent='ไม่สามารถเปิดข้อมูล: '+err.message+' กรุณาตรวจสอบการเผยแพร่ Google Apps Script';
      toast('ยังไม่สามารถโหลดข้อมูลการเช็กชื่อได้');
    });
  }
@@ -213,7 +198,7 @@
    }catch(err){alert('ไม่สามารถเปิดแก้ไข: '+err.message);loadState()}
    finally{ui.busy=false}
  }
- authState.token=readCapability();
+ if(location.hash)history.replaceState(null,'',location.pathname+location.search);
  loadState();
  window.scoutApp={getSummary:()=>({students:DB.students.length,transfers:DB.transfers.length,records:Object.entries(ui.records).filter(([k,v])=>v).length,week:ui.week,group:ui.group,patrol:ui.patrol}),getStudent:(id)=>DB.students.find(s=>s.id===id)};
 })();
