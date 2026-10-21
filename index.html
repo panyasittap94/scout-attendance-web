@@ -9,7 +9,7 @@
 </style></head>
 <body><div class="shell">
 <aside class="sidebar"><div class="brand"><div class="brand-logo">⚜</div><div><div class="brand-title">SCOUT ATTENDANCE</div><div class="brand-sub">ระบบกิจกรรมลูกเสือ v1.0</div></div></div><div class="navlabel">เมนูหลัก</div><nav id="navDesktop" class="nav"></nav><div class="sidebar-foot"><strong>ภาคเรียนที่ 2/2569</strong><br>ลูกเสือสามัญรุ่นใหญ่ · ชั้น ม.1<br>โรงเรียนทุ่งเสลี่ยมชนูปถัมภ์<hr style="border:0;border-top:1px solid #ffffff22;margin:11px 0">ข้อมูลผ่าน Google Sheets<br><span style="color:#edc779">STAGING — ยังไม่ใช่ Production</span></div></aside>
-<main class="shellmain"><header class="topbar"><div><div class="topname" id="topName">ภาพรวมกิจกรรมลูกเสือ</div><div class="topsub">ภาคเรียนที่ 2 ปีการศึกษา 2569 · อำเภอทุ่งเสลี่ยม จังหวัดสุโขทัย</div></div><div class="topactions"><button type="button" class="btn small" data-copy-link title="คัดลอกลิงก์เดียวกันสำหรับเปิดบนโทรศัพท์หรือส่งให้ผู้กำกับ">🔗 คัดลอกลิงก์</button><span class="chip" id="topWeek">พ. 21 ต.ค. 2569</span><span class="chip demo">● STAGING</span></div></header><nav id="navMobile" class="mobile-nav"></nav><div class="content"><div id="overview" class="view"></div><div id="checkin" class="view"></div><div id="calendar" class="view"></div><div id="report" class="view"></div><div id="roster" class="view"></div><div id="staff" class="view"></div><div id="settings" class="view"></div><footer class="footnote">SCOUT ATTENDANCE v1.0 · Web App · ข้อมูลทะเบียนอ่านจาก Google Sheets โดยไม่ได้ฝังรายชื่อนักเรียนไว้ในซอร์สโค้ด</footer></div></main></div><div class="toast" role="status" aria-live="polite" id="toast"></div><div id="appLoading" style="position:fixed;inset:0;display:grid;place-items:center;background:#f5f7fb;color:#26455d;z-index:500;font:700 18px system-ui;text-align:center;padding:20px">กำลังเตรียมระบบ STAGING...<br>ไม่ต้องเข้าสู่ระบบ Google</div>
+<main class="shellmain"><header class="topbar"><div><div class="topname" id="topName">ภาพรวมกิจกรรมลูกเสือ</div><div class="topsub">ภาคเรียนที่ 2 ปีการศึกษา 2569 · อำเภอทุ่งเสลี่ยม จังหวัดสุโขทัย</div></div><div class="topactions"><button type="button" class="btn small" data-copy-link title="คัดลอกลิงก์เดียวสำหรับส่งใน LINE กลุ่มผู้กำกับ">🔗 ส่งลิงก์ LINE</button><span class="chip" id="topWeek">พ. 21 ต.ค. 2569</span><span class="chip demo">● STAGING</span></div></header><nav id="navMobile" class="mobile-nav"></nav><div class="content"><div id="overview" class="view"></div><div id="checkin" class="view"></div><div id="calendar" class="view"></div><div id="report" class="view"></div><div id="roster" class="view"></div><div id="staff" class="view"></div><div id="settings" class="view"></div><footer class="footnote">SCOUT ATTENDANCE v1.0 · Web App · ข้อมูลทะเบียนอ่านจาก Google Sheets โดยไม่ได้ฝังรายชื่อนักเรียนไว้ในซอร์สโค้ด</footer></div></main></div><div class="toast" role="status" aria-live="polite" id="toast"></div><div id="appLoading" style="position:fixed;inset:0;display:grid;place-items:center;background:#f5f7fb;color:#26455d;z-index:500;font:700 18px system-ui;text-align:center;padding:20px">กำลังเตรียมระบบ STAGING...<br>ไม่ต้องเข้าสู่ระบบ Google</div>
 <script id="app-data" type="application/json">{"students":[],"transfers":[],"troops":[{"g":1,"lead":"ผู้กำกับกอง 1","deputies":["รองผู้กำกับ"]},{"g":2,"lead":"ผู้กำกับกอง 2","deputies":["รองผู้กำกับ"]},{"g":3,"lead":"ผู้กำกับกอง 3","deputies":["รองผู้กำกับ"]},{"g":4,"lead":"ผู้กำกับกอง 4","deputies":["รองผู้กำกับ"]}],"weeks":["2026-10-21","2026-10-28","2026-11-04","2026-11-11","2026-11-18","2026-11-25","2026-12-02","2026-12-09","2026-12-16","2026-12-23","2026-12-30","2027-01-06","2027-01-13","2027-01-20","2027-01-27","2027-02-03","2027-02-10","2027-02-17","2027-02-24","2027-03-03"],"source":"server-only-private-registry","term":"2/2569"}</script>
 <script src="config.js"></script>
 <script>
@@ -74,7 +74,7 @@
    if(!authState.token){toast('ยังไม่มีลิงก์ใช้งาน กรุณาเปิดจากลิงก์ที่ผู้ดูแลส่งให้');return}
    const link=location.origin+location.pathname+'#access='+encodeURIComponent(authState.token);
    if(navigator.clipboard&&navigator.clipboard.writeText){
-     navigator.clipboard.writeText(link).then(()=>toast('คัดลอกลิงก์แล้ว ใช้เปิดบนโทรศัพท์ได้ทันที'))
+     navigator.clipboard.writeText(link).then(()=>toast('คัดลอกลิงก์แล้ว วางส่งใน LINE กลุ่มผู้กำกับได้เลย'))
        .catch(()=>window.prompt('คัดลอกลิงก์สำหรับผู้กำกับ',link));
    }else{window.prompt('คัดลอกลิงก์สำหรับผู้กำกับ',link)}
  }
@@ -174,7 +174,7 @@
    const loading=document.getElementById('appLoading');
    if(!authState.token||!GAS_URL){
      if(loading)loading.textContent=!authState.token
-       ?'STAGING: เว็บไซต์เปิดได้แล้ว แต่ต้องเปิดจากลิงก์เฉพาะสำหรับผู้กำกับจึงจะแสดงทะเบียนหรือเช็กชื่อได้'
+       ?'STAGING: กรุณาเปิดลิงก์ฉบับเต็มที่ส่งใน LINE กลุ่มผู้กำกับ'
        :'STAGING: ยังไม่ได้กำหนด Apps Script Web App URL';
      return;
    }
