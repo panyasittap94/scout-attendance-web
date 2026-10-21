@@ -49,6 +49,20 @@ test('JSONP client sets random callback, no iframe or authentication',()=>{
  assert.match(html,/url\.searchParams\.set\('action',action\)/);
  assert.match(html,/url\.searchParams\.set\('callback',callback\)/);
  assert.match(html,/script\.onerror=/);
- assert.match(html,/Google Apps Script ไม่ตอบกลับภายใน 45 วินาที/);
+ assert.match(html,/Google Apps Script ไม่ตอบกลับภายในเวลาที่กำหนด/);
  assert.doesNotMatch(html,/createElement\('iframe'\)|#access=|scout_capability/);
+});
+
+test('automatically retries bootstrap data loads only, never attendance writes',()=>{
+  assert.match(html,/async function bootstrapWithRetry\(loading\)/);
+  assert.match(html,/for\(let attempt=1;attempt<=3;attempt\+\+\)/);
+  assert.match(html,/try\{return await api\('bootstrap'\)\}/);
+  assert.match(html,/const result=await api\('save',request\)/);
+  assert.match(html,/const result=await api\('reopen',\{/);
+  assert.doesNotMatch(html,/bootstrapWithRetry\(.*save|bootstrapWithRetry\(.*reopen/);
+});
+test('failed bootstrap offers clear retry button without suggesting different Google accounts',()=>{
+  assert.match(html,/function showLoadFailure\(loading,error\)/);
+  assert.match(html,/ลองเชื่อมต่ออีกครั้ง/);
+  assert.doesNotMatch(html,/Samsung Internet อาจบล็อกคำขอ/);
 });
