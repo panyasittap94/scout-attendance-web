@@ -99,6 +99,31 @@
  document.addEventListener('input',e=>{let t=e.target;if(t.dataset.note){ui.notes[recordKey(t.dataset.note)]=t.value;return}if(t.id==='rosterSearch'){const pos=t.selectionStart;ui.rosterSearch=t.value;render();const inp=document.getElementById('rosterSearch');if(inp){inp.focus();try{inp.setSelectionRange(pos,pos)}catch(e){}}}});
 
  const GAS_URL=String(window.SCOUT_GAS_BRIDGE_URL||'').trim();
+ const WORKER_URL=String(window.SCOUT_WORKER_API_BASE||'').trim().replace(/\\/$/,'');
+ async function apiViaWorker(action,payload){
+   if(!/^https:\\/\\/[A-Za-z0-9.-]+\\.workers\\.dev(?:\\/.*)?$/.test(WORKER_URL))
+     throw new Error('API ตัวกลางยังไม่ได้ตั้งค่า URL ที่ถูกต้อง');
+   const controller=new AbortController();
+   const timer=window.setTimeout(()=>controller.abort(),40000);
+   try{
+     const method=action==='bootstrap'?'GET':'POST';
+     const options={method,mode:'cors',credentials:'omit',cache:'no-store',
+       headers:{Accept:'application/json'},signal:controller.signal};
+     if(method==='POST'){
+       options.headers['Content-Type']='application/json';
+       options.body=JSON.stringify(payload||{});
+     }
+     const response=await fetch(WORKER_URL+'/'+action,options);
+     const result=await response.json();
+     if(!response.ok||!result||result.ok!==true)
+       throw new Error(result&&result.error||'ไม่สามารถเชื่อมต่อ API ได้');
+     return result.data;
+   }catch(err){
+     if(err&&err.name==='AbortError')throw new Error('API ตัวกลางไม่ตอบกลับภายในเวลาที่กำหนด');
+     throw err;
+   }finally{window.clearTimeout(timer)}
+ }
+
  function randomHex(n){
    const b=new Uint8Array(n);window.crypto.getRandomValues(b);
    return Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');
@@ -106,6 +131,7 @@
  // Apps Script ContentService JSONP avoids CORS preflight and iframe blockers.
  // This application intentionally exposes read/write actions on public STAGING.
  function api(action,payload){
+   if(WORKER_URL)return apiViaWorker(action,payload);
    return new Promise((resolve,reject)=>{
      if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(GAS_URL)){
        reject(new Error('URL ของ Google Apps Script ไม่ถูกต้อง'));return;
@@ -186,8 +212,8 @@
  }
  function loadState(){
    const loading=document.getElementById('appLoading');
-   if(!GAS_URL){
-     if(loading)loading.textContent='STAGING: ยังไม่ได้กำหนด URL ของ Apps Script Web App';
+   if(!WORKER_URL&&!GAS_URL){
+     if(loading)loading.textContent='STAGING: ยังไม่ได้กำหนด URL ของ API เบื้องหลัง';
      return;
    }
    bootstrapWithRetry(loading).then(data=>{
