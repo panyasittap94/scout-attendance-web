@@ -29,3 +29,14 @@ test('the public frontend calls Apps Script only through message bridge',()=>{
   assert.match(html,/readCapability\(\)/);
   assert.match(config,/window\.SCOUT_GAS_BRIDGE_URL\s*=/);
 });
+
+test('single full staff URL remains shareable between browsers and phones',()=>{
+  assert.match(html,/data-copy-link/);
+  assert.match(html,/function copyStaffLink\(\)/);
+  assert.match(html,/location\.origin\+location\.pathname\+'#access='/);
+  assert.doesNotMatch(html,/history\.replaceState\(null,''/);
+  assert.match(html,/sessionStorage\.getItem\('scout_capability'\)/);
+});
+test('mobile header keeps the share-link button accessible',()=>{
+  assert.match(html,/\.topactions \[data-copy-link\]\{white-space:nowrap/);
+});
